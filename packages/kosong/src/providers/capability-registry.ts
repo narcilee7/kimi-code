@@ -121,6 +121,28 @@ const OPENAI_LEGACY_CAPABILITY_CATALOG: readonly CapabilityCatalogEntry[] = [
     matches: (name) => name.startsWith('gpt-3.5-turbo'),
     capability: OPENAI_TEXT_TOOL_CAPABILITY,
   },
+  // Volcano Engine (火山引擎 / Ark / Doubao)
+  {
+    matches: (name) =>
+      name.startsWith('deepseek-r1') || name.startsWith('deepseek-reasoner'),
+    capability: OPENAI_REASONING_CAPABILITY,
+  },
+  {
+    matches: (name) =>
+      name.startsWith('doubao-vision') || name.startsWith('doubao-vl'),
+    capability: OPENAI_VISION_TOOL_CAPABILITY,
+  },
+  {
+    matches: (name) =>
+      name.startsWith('doubao-') ||
+      name.startsWith('deepseek-') ||
+      name.startsWith('glm-') ||
+      name.startsWith('qwen-') ||
+      name.startsWith('kimi-') ||
+      name.startsWith('minimax-') ||
+      name.startsWith('ep-'),
+    capability: OPENAI_TEXT_TOOL_CAPABILITY,
+  },
 ];
 
 const OPENAI_RESPONSES_CAPABILITY_CATALOG: readonly CapabilityCatalogEntry[] = [

@@ -61,9 +61,24 @@ describe('OPEN_PLATFORMS', () => {
     expect(getOpenPlatformById('unknown')).toBeUndefined();
   });
 
+  it('contains volcengine platforms with openai wireType', () => {
+    expect(getOpenPlatformById('volcengine-coding-plan')).toMatchObject({
+      name: 'Volcano Engine Coding Plan (API key)',
+      baseUrl: 'https://ark.cn-beijing.volces.com/api/coding/v3',
+      wireType: 'openai',
+    });
+    expect(getOpenPlatformById('volcengine-agent-plan')).toMatchObject({
+      name: 'Volcano Engine Agent Plan (API key)',
+      baseUrl: 'https://ark.cn-beijing.volces.com/api/plan/v3',
+      wireType: 'openai',
+    });
+  });
+
   it('isOpenPlatformId works', () => {
     expect(isOpenPlatformId('moonshot-cn')).toBe(true);
     expect(isOpenPlatformId('moonshot-ai')).toBe(true);
+    expect(isOpenPlatformId('volcengine-coding-plan')).toBe(true);
+    expect(isOpenPlatformId('volcengine-agent-plan')).toBe(true);
     expect(isOpenPlatformId('kimi-code')).toBe(false);
   });
 });
@@ -114,6 +129,42 @@ describe('fetchOpenPlatformModels', () => {
     expect(error).toBeInstanceOf(OpenPlatformApiError);
     expect((error as OpenPlatformApiError).status).toBe(401);
     expect((error as Error).message).toBe('invalid API key');
+  });
+
+  it('parses OpenAI-standard /models format when Kimi fields are absent', async () => {
+    const fetchMock = vi.fn(
+      async () =>
+        new Response(
+          JSON.stringify({
+            object: 'list',
+            data: [
+              { id: 'doubao-pro-32k', object: 'model' },
+              { id: 'deepseek-r1-250120', object: 'model' },
+              { id: 'gpt-4', object: 'model' },
+            ],
+          }),
+          { status: 200, headers: { 'Content-Type': 'application/json' } },
+        ),
+    );
+    const platform = getOpenPlatformById('volcengine-coding-plan')!;
+
+    const models = await fetchOpenPlatformModels(platform, 'sk-test', fetchMock as unknown as typeof fetch);
+
+    expect(models).toHaveLength(3);
+    expect(models[0]).toMatchObject({
+      id: 'doubao-pro-32k',
+      contextLength: 32_000,
+      supportsToolUse: true,
+    });
+    expect(models[1]).toMatchObject({
+      id: 'deepseek-r1-250120',
+      contextLength: 64_000,
+      supportsReasoning: true,
+    });
+    expect(fetchMock).toHaveBeenCalledWith(
+      'https://ark.cn-beijing.volces.com/api/coding/v3/models',
+      expect.anything(),
+    );
   });
 
   it('throws on unexpected response shape', async () => {
@@ -247,6 +298,35 @@ describe('applyOpenPlatformConfig', () => {
 
     expect(config.models?.['moonshot-cn/stale']).toBeUndefined();
     expect(config.models?.['other/model']).toBeDefined();
+  });
+
+  it('writes openai wireType for volcengine platforms', () => {
+    const config: ManagedKimiConfigShape = {
+      providers: {},
+    };
+    const platform = getOpenPlatformById('volcengine-coding-plan')!;
+    const models = [
+      { id: 'doubao-pro-32k', contextLength: 128000, supportsReasoning: false, supportsImageIn: false, supportsVideoIn: false },
+    ];
+
+    applyOpenPlatformConfig(config, {
+      platform,
+      models,
+      selectedModel: models[0]!,
+      thinking: false,
+      apiKey: 'sk-test',
+    });
+
+    expect(config.providers['volcengine-coding-plan']).toMatchObject({
+      type: 'openai',
+      baseUrl: 'https://ark.cn-beijing.volces.com/api/coding/v3',
+      apiKey: 'sk-test',
+    });
+    expect(config.models?.['volcengine-coding-plan/doubao-pro-32k']).toMatchObject({
+      provider: 'volcengine-coding-plan',
+      model: 'doubao-pro-32k',
+      maxContextSize: 128000,
+    });
   });
 });
 

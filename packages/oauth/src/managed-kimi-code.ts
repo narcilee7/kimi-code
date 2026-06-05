@@ -96,7 +96,7 @@ export class ManagedKimiCodeModelsAuthError extends OAuthUnauthorizedError {
 }
 
 export interface ManagedKimiProviderConfig {
-  type: 'kimi';
+  type: 'kimi' | 'openai' | 'openai_responses' | 'anthropic' | 'google-genai' | 'vertexai';
   baseUrl?: string | undefined;
   apiKey?: string | undefined;
   oauth?: ManagedKimiOAuthRef | undefined;

@@ -103,7 +103,8 @@ async function handleOpenPlatformLogin(
   platform: OpenPlatformDefinition,
 ): Promise<void> {
   const consoleHost = platform.consoleUrl?.replace(/^https?:\/\//, '') ?? '';
-  const platformName = consoleHost.length > 0 ? `Kimi Platform (${consoleHost})` : 'Kimi Platform';
+  const platformName =
+    consoleHost.length > 0 ? `${platform.name} (${consoleHost})` : platform.name;
   const subtitleLines = [
     `${'base_url'.padEnd(12)}${platform.baseUrl}`,
     `${'saved to'.padEnd(12)}~/.kimi-code/config.toml`,
